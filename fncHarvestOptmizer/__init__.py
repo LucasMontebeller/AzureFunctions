@@ -1,22 +1,39 @@
 import logging
-
 import azure.functions as func
+import pandas as pd # é necessario instalar a lib xlrd
+import json
 
+'''
+Referência
+https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=linux%2Cportal%2Cv2%2Cbash&pivots=programming-language-python
+'''
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
+    # Rota POST do otimizador
     if req.method == 'POST':
+        status_code = 400
         if 'file' in req.files:
             file = req.files['file']
             if file.content_type == 'application/vnd.ms-excel':
+                # leitura do arquivo (apenas para log)
                 file_content = file.read()
-                return func.HttpResponse(f"Arquivo XLS {file.filename} recebido e processado com sucesso.", status_code=200)
-            else:
-                return func.HttpResponse("Por favor, envie um arquivo XLS válido.", status_code=400)
-        else:
-            return func.HttpResponse("Nenhum arquivo XLS enviado na requisição.", status_code=400)
+                df = pd.read_excel(file_content, engine='xlrd')
+                print(df.head())
 
+                message = f"File {file.filename} successfully received and processed."
+                print(message)
+                status_code = 200
+            else:
+                message = f"Please upload a valid XLS file. Submitted format: {file.content_type}."
+        else:
+            message = "File not uploaded."
+            
+        obj = {"message": message}
+        return func.HttpResponse(json.dumps(obj, indent=4), status_code=status_code)
+
+    # Somente para teste na rota GET
     name = req.params.get('name')
     if not name:
         try:
