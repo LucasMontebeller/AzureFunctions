@@ -2,6 +2,7 @@ import logging
 import azure.functions as func
 import pandas as pd # é necessario instalar a lib xlrd
 import json
+import os
 
 '''
 Referência
@@ -32,6 +33,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             
         obj = {"message": message}
         return func.HttpResponse(json.dumps(obj, indent=4), status_code=status_code)
+
+    # Envio de arquivo - matriz OD
+    elif req.method == 'GET':
+        xls_file_path = os.path.join(os.getcwd(), 'Files', 'ODmatrix.xls')
+
+        try:
+            with open(xls_file_path, "rb") as xls_file:
+                xls_data = xls_file.read()
+
+                headers = {
+                    "Content-Type": "application/vnd.ms-excel",
+                    "Content-Disposition": "attachment; filename=ODmatrix.xls"
+                }
+
+                return func.HttpResponse(xls_data, headers=headers, status_code=200)
+        except FileNotFoundError:
+            message = "File not found."
+            obj = {"message": message}
+            return func.HttpResponse(json.dumps(obj, indent=4), status_code=404)
 
     # Somente para teste na rota GET
     name = req.params.get('name')
