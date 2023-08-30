@@ -11,31 +11,9 @@ https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
-
-    # Rota POST do otimizador
-    if req.method == 'POST':
-        status_code = 400
-        if 'file' in req.files:
-            file = req.files['file']
-            if file.content_type == 'application/vnd.ms-excel':
-                # leitura do arquivo (apenas para log)
-                file_content = file.read()
-                df = pd.read_excel(file_content, engine='xlrd')
-                print(df.head())
-
-                message = f"File {file.filename} successfully received and processed."
-                print(message)
-                status_code = 200
-            else:
-                message = f"Please upload a valid XLS file. Submitted format: {file.content_type}."
-        else:
-            message = "File not uploaded."
-            
-        obj = {"message": message}
-        return func.HttpResponse(json.dumps(obj, indent=4), status_code=status_code)
-
+    
     # Envio de arquivo - matriz OD
-    elif req.method == 'GET':
+    if req.method == 'POST':
         xls_file_path = os.path.join(os.getcwd(), 'Files', 'ODmatrix.xls')
 
         try:
